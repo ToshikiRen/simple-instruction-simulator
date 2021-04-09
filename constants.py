@@ -1,14 +1,13 @@
-# Constants module
-
 from __future__ import print_function
 from unicorn import *
 from unicorn.x86_const import *
 from tkinter import *
 import tkinter.font as tkFont 
+from keystone import *
 
 root = Tk()
 
-instr_code = 1
+instr_code = -1
 
 courier24 = tkFont.Font(family="Courier", size=24, weight="bold")
 courier18 = tkFont.Font(family="Courier", size=18, weight="bold")

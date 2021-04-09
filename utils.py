@@ -55,17 +55,64 @@ def setRegsName():
     for i in range(number_of_regs):
         list_regs_string[i].set(list_regs[i] + ': ')
 
-def runInstruction(instr):
+def runInstruction_old(instr, mu, ADDRESS):
 
     global instr_code
     instr = instr.replace(" ", "")
     instr = instr.replace("\n", '')
     instr = instr.lower()
     try:
+        print(instr, end = '\n')
         instr_code = instruction_set_arch[instr]
+        print(instr_code, end = '\n')
     except:
         instr_code = -1
+
+    if instr_code != -1:
+        instr = bytes(instr_code, 'UTF-8')
+        mu.mem_write(ADDRESS, instr)
+        runInstructionOn(mu, ADDRESS, instr)
+        instr_code = -1
+        readRegisters(mu)
+        updateStrVar()
+        #printRegString()
     
+
+def runInstruction(instr, mu, ADDRESS):
+
+    # global instr_code
+    instr = instr.replace("\n", '')
+    print(instr)
+    try:
+        ks = Ks(KS_ARCH_X86, KS_MODE_32)
+        instr_code, count = ks.asm(instr)
+        instr = bytes()
+       
+        for x in instr_code:
+            instr = instr + bytes([x])
+        instr_code = instr
+    
+    except KsError as e:
+        instr_code = -1
+     
+    if instr_code != -1:
+        try:
+            mu.mem_write(ADDRESS, instr)
+        except:
+            print("Memory write FAILED!!")
+        runInstructionOn(mu, ADDRESS, instr)
+        instr_code = -1
+        readRegisters(mu)
+        updateStrVar()
+        #printRegString()
+    
+
+ 
 def setupUI():
     
     pass
+
+
+def runInstructionOn(mu, address, instr_code):
+
+    mu.emu_start(address, address + len(instr_code))
