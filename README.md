@@ -18,13 +18,13 @@ Integrarea modulelor de simulare si generare a instructiunilor assembly pe arhit
 
 
 ## Module de baza:
-[Unicorn](https://www.unicorn-engine.org/)
-[Keystone](https://www.keystone-engine.org/)
-[Tkinter](https://docs.python.org/3/library/tkinter.html)
+- [Unicorn](https://www.unicorn-engine.org/)
+- [Keystone](https://www.keystone-engine.org/)
+- [Tkinter](https://docs.python.org/3/library/tkinter.html)
 
 ## Aplicatii utile:
-[Dezasamblor](https://onlinedisassembler.com/odaweb/)
-[x86 opcode](http://ref.x86asm.net/coder32.html)
+- [Dezasamblor](https://onlinedisassembler.com/odaweb/)
+- [x86 opcode](http://ref.x86asm.net/coder32.html)
 
 
 
