@@ -2,6 +2,7 @@ from __future__ import print_function
 from unicorn import *
 from unicorn.x86_const import *
 from tkinter import *
+from tkinter import ttk
 import tkinter.font as tkFont 
 from keystone import *
 
@@ -9,8 +10,13 @@ root = Tk()
 
 instr_code = -1
 
+mem = ''
+ADDRESS = 0x0000000
+MEM_SIZE = 8 * 512
+
 courier24 = tkFont.Font(family="Courier", size=24, weight="bold")
 courier18 = tkFont.Font(family="Courier", size=18, weight="bold")
+courier10 = tkFont.Font(family="Courier", size=10, weight="bold")
 
 # Registers default values
 EAX_data = '00 00 00 00'
@@ -63,7 +69,7 @@ ESI_sname = StringVar('')
 EDI_sname = StringVar('')
 ESP_sname = StringVar('')
 EBP_sname = StringVar('')
-
+memStringVar = StringVar('')
 
 
 list_regs_string =[ EAX_sname,

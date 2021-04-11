@@ -29,31 +29,35 @@ if "__main__" == __name__:
     sendCommand = Button(inputCommandFrame, text = 'Rulare Instructiune', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS))
     sendCommand.grid(row = 2, column = 1)
     
+    openMemoryButton = Button(root, text = 'Memorie', command = lambda: openMemory(mu, ADDRESS, MEM_SIZE))
+    openMemoryButton.grid(row = 3, column = 0)
+    
+
     # code to be emulated
     X86_CODE32 = b"\x41\x4a" # INC ecx; DEC edx
     
     # memory address where emulation starts
-    ADDRESS = 0x0000000
-    
+
     print("Emulate i386 code")
     try:
         # Initialize emulator in X86-32bit mode
         mu = Uc(UC_ARCH_X86, UC_MODE_32)
 
-        # map 2MB memory for this emulation
-        mu.mem_map(ADDRESS, 2 * 1024 * 1024)
+        # map memory for this emulation
+        mu.mem_map(ADDRESS, MEM_SIZE)
 
+        # adding code running hook
+        mu.hook_add(UC_HOOK_MEM_WRITE, hook_mem)
         # write machine code to be emulated to memory
-        
-
-        input('Press any key to continue')
-
+    
         # initialize machine registers
         initializeRegisters(mu, registers_initial_values)
         readRegisters(mu)
         updateStrVar()
 
-        input('Press any key to continue')
+
+
+       
        
 
     
