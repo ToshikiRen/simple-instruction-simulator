@@ -24,7 +24,7 @@ if "__main__" == __name__:
     inputCommandFrame.grid(row = 0, column = 1) 
     commandLabel = Label(inputCommandFrame, text = 'Introduceti instructiunea', font = courier18)
     commandLabel.grid(row = 0, column = 1)
-    inputCommand = Text(inputCommandFrame, height = 1, width = 25)
+    inputCommand = Text(inputCommandFrame, height = 10, width = 40)
     inputCommand.grid(row = 1, column = 1) 
     sendCommand = Button(inputCommandFrame, text = 'Rulare Instructiune', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS))
     sendCommand.grid(row = 2, column = 1)
@@ -54,12 +54,6 @@ if "__main__" == __name__:
         initializeRegisters(mu, registers_initial_values)
         readRegisters(mu)
         updateStrVar()
-
-
-
-       
-       
-
     
     except UcError as e:
         print("ERROR: %s" % e)

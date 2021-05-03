@@ -11,7 +11,7 @@ root = Tk()
 instr_code = -1
 
 mem = ''
-ADDRESS = 0x0000000
+ADDRESS = 0x0001000
 MEM_SIZE = 8 * 512
 
 courier24 = tkFont.Font(family="Courier", size=24, weight="bold")
