@@ -4,7 +4,7 @@ from utils import *
 
 if "__main__" == __name__:
     
-    size = '680x500'
+
 
     root.title('x86 Registers')
     root.geometry(size)
@@ -20,15 +20,24 @@ if "__main__" == __name__:
     updateStrVar()
     setRegsName()
 
+    # Add instructions frame
     inputCommandFrame = LabelFrame(root, padx = 0, pady = 0)
     inputCommandFrame.grid(row = 0, column = 1) 
     commandLabel = Label(inputCommandFrame, text = 'Introduceti instructiunea', font = courier18)
     commandLabel.grid(row = 0, column = 1)
+
+    
+    # Add instruction writting textbox
     inputCommand = Text(inputCommandFrame, height = 10, width = 40)
+    scroll = ttk.Scrollbar(inputCommandFrame, orient = VERTICAL, command = inputCommand.yview)
+    scroll.grid(row = 1, column = 2, sticky='nsew')
+    inputCommand['yscrollcommand'] = scroll.set
     inputCommand.grid(row = 1, column = 1) 
+
     sendCommand = Button(inputCommandFrame, text = 'Rulare Instructiune', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS))
     sendCommand.grid(row = 2, column = 1)
     
+    # Memory window opener
     openMemoryButton = Button(root, text = 'Memorie', command = lambda: openMemory(mu, ADDRESS, MEM_SIZE))
     openMemoryButton.grid(row = 3, column = 0)
     

@@ -8,6 +8,8 @@ from keystone import *
 
 root = Tk()
 
+size = '700x500'
+
 instr_code = -1
 
 mem = ''
