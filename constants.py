@@ -5,6 +5,8 @@ from tkinter import *
 from tkinter import ttk
 import tkinter.font as tkFont 
 from keystone import *
+import time
+import threading
 
 root = Tk()
 
@@ -12,7 +14,6 @@ size = '700x500'
 
 instr_code = -1
 
-mem = ''
 ADDRESS = 0x0001000
 MEM_SIZE = 8 * 512
 
@@ -72,7 +73,7 @@ EDI_sname = StringVar('')
 ESP_sname = StringVar('')
 EBP_sname = StringVar('')
 memStringVar = StringVar('')
-
+memPureHexllStringVar = StringVar('')
 
 list_regs_string =[ EAX_sname,
                     EBX_sname,
@@ -117,3 +118,4 @@ instruction_set_arch = {
 registers_initial_values = [0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]
 
 
+mu = ""

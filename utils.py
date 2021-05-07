@@ -13,6 +13,7 @@ def updateStrVar():
     for i in range(number_of_regs):
         regs_dict[list_regs[i]][1].set(regs_dict[list_regs[i]][0])
     
+    
 # TODO: (DONE)  Formats the register
 def formatRegisterString(regString, regName):
 
@@ -46,6 +47,7 @@ def readRegisters(mu):
             hex(mu.reg_read(list_regs_x86[i])), list_regs[i])
         regs_dict[list_regs[i]][0] = regs_dict[list_regs[i]][0].upper()
 
+    print( mu.reg_read(UC_X86_REG_EIP))
 # TODO: (DONE)  Initialize registers
 def initializeRegisters(mu, listOfValues):
 
@@ -66,9 +68,9 @@ def runInstruction_old(instr, mu, ADDRESS):
     instr = instr.replace("\n", '')
     instr = instr.lower()
     try:
-        print(instr, end='\n')
+        # print(instr, end='\n')
         instr_code = instruction_set_arch[instr]
-        print(instr_code, end='\n')
+        # print(instr_code, end='\n')
     except:
         instr_code = -1
 
@@ -82,15 +84,16 @@ def runInstruction_old(instr, mu, ADDRESS):
         # printRegString()
 
 # TODO: (DONE)  Run an instruction at a give address
-def runInstruction(instr, mu, ADDRESS):
+def runInstruction(instr, mu, ADDRESS, step = False):
 
     instr = instr.replace("\n", '')
-    print(instr)
+    # print(instr)
     # instance of Keystone
     try:
         # Setup a keystone object
         ks = Ks(KS_ARCH_X86, KS_MODE_32)
         instr_code, count = ks.asm(instr)
+        print(instr_code)
         instr = bytes()
 
         for x in instr_code:
@@ -104,7 +107,7 @@ def runInstruction(instr, mu, ADDRESS):
     # Check if an error has occured
     if instr_code != -1:
         try:
-            print(ADDRESS)
+            # print(ADDRESS)
             mu.mem_write(ADDRESS, instr)
 
         except:
@@ -121,6 +124,19 @@ def runInstruction(instr, mu, ADDRESS):
 def hook_mem(uc, access, address, size, value, user_data):
 
     pass
+
+def hook_code(uc, address, size, user_data):
+
+    pass
+
+    readRegisters(uc)
+    updateStrVar()
+    printRegString()
+
+    # print("Hook call instr")
+   
+
+
 
 # TODO: (DONE)  Convert to hex, but keeps double 00 intact
 def my_hex(to_hex):
@@ -142,15 +158,17 @@ def add_address_range(start_address, per_row, max_len):
     return start + ": "
 
 # TODO: (DONE) Convert data to HEXLL format
-def hexll(to_hexll):
+def hexll(to_hexll, pure_hexll = False):
 
     if chr(to_hexll).isalpha():
         return "." + chr(to_hexll)
-    else:
+    elif not pure_hexll:
         return ". "    
+    else:
+        return my_hex(to_hexll)
 
 # TODO: (DONE) Reads data from memory 
-def read_mem_format(mu, start_address, quantity, per_row = 16):
+def read_mem_format(mu, start_address, quantity, per_row = 16, pure_hexll = False):
 
     mem = mu.mem_read(start_address, quantity)
     mem_data = ''
@@ -158,14 +176,20 @@ def read_mem_format(mu, start_address, quantity, per_row = 16):
     for i in range(0, quantity//per_row):
         mem_data += add_address_range(start_address, per_row, max_len)
         start_address += per_row
-        mem_data += " ".join([my_hex(x)
-                              for x in (mem[i * per_row: per_row * (i + 1)])])
-        mem_data += "    "
+        if not pure_hexll:
+            mem_data += " ".join([my_hex(x)
+                                for x in (mem[i * per_row: per_row * (i + 1)])])
+            mem_data += "    "
 
-        mem_data += " ".join([hexll(x)
-                        for x in (mem[i * per_row: per_row * (i + 1)])])
+            mem_data += " ".join([hexll(x)
+                            for x in (mem[i * per_row: per_row * (i + 1)])])
 
-        
+        else:
+            mem_row = " ".join([hexll(x, True)
+                            for x in (mem[i * per_row: per_row * (i + 1)])])
+            mem_data += mem_row
+            print(mem_row)
+
         mem_data += '\n'
 
     return mem_data, len(add_address_range(start_address, per_row, max_len))
@@ -181,8 +205,13 @@ def setupUI():
 
 
 def runInstructionOn(mu, address, instr_code):
-
+    # TODO: Add count = number_of_instr_to_run
     mu.emu_start(address, address + len(instr_code))
+
+def runOneInstruction(mu):
+
+    EIP_value = mu.reg_read(UC_X86_REG_EIP) 
+    mu.emu_start(mu, EIP, count = 1)
 
 
 # Tkinter
@@ -272,3 +301,40 @@ def updateMemory(mu, address, mem_size):
 
     mem, _ = read_mem_format(mu, address, mem_size)
     memStringVar.set(mem)
+
+
+
+# TODO: (DONE) Displays memory contents hexll
+def openMemoryPureHexll(mu, start_address=ADDRESS, quantity=MEM_SIZE, title="Memory Hexll", size="940x400"):
+
+    global memPureHexllStringVar
+    # Set up the window for memory display
+    window, main_frame = openWindow(title, size)
+    
+    mem, offset = read_mem_format(mu, start_address, quantity, pure_hexll = True)
+    memPureHexllStringVar.set(mem)
+
+
+    stringVarData = offset * " " + " ".join(my_hex(index) for index in range(0, 16))
+    memAddressString = StringVar('')
+    memAddressString.set(stringVarData)
+    stringAddressLabel = setLabel(main_frame, memAddressString, courier10, anchor="w", justify=LEFT)
+    stringAddressLabel.pack(side = TOP, anchor = "w")
+
+    windowFrame = createScrollableCanvas(main_frame, window, True, True)
+
+    print(mem)
+
+    # Adds the update memory button
+    updateMeme = Button(window, text = 'Update', command = lambda: updateMemoryHexll(mu, ADDRESS, MEM_SIZE))
+    updateMeme.pack(side = BOTTOM) 
+    label = setLabel(windowFrame, memPureHexllStringVar, courier10, anchor="center", justify=LEFT, padx=0,
+                     width=16)
+    label.grid(row = 1, column = 0)
+
+# TODO: (DONE) Updates memory display window
+def updateMemoryHexll(mu, address, mem_size):
+
+    mem, _ = read_mem_format(mu, address, mem_size, pure_hexll = True)
+    memPureHexllStringVar.set(mem)
+

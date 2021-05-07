@@ -4,7 +4,7 @@ from utils import *
 
 if "__main__" == __name__:
     
-
+   
 
     root.title('x86 Registers')
     root.geometry(size)
@@ -23,24 +23,37 @@ if "__main__" == __name__:
     # Add instructions frame
     inputCommandFrame = LabelFrame(root, padx = 0, pady = 0)
     inputCommandFrame.grid(row = 0, column = 1) 
-    commandLabel = Label(inputCommandFrame, text = 'Introduceti instructiunea', font = courier18)
+    commandLabel = Label(inputCommandFrame, text = 'Introduceti secventa de cod', font = courier18)
     commandLabel.grid(row = 0, column = 1)
 
     
     # Add instruction writting textbox
-    inputCommand = Text(inputCommandFrame, height = 10, width = 40)
+    inputCommand = Text(inputCommandFrame, height = 17, width = 40)
     scroll = ttk.Scrollbar(inputCommandFrame, orient = VERTICAL, command = inputCommand.yview)
     scroll.grid(row = 1, column = 2, sticky='nsew')
     inputCommand['yscrollcommand'] = scroll.set
     inputCommand.grid(row = 1, column = 1) 
 
-    sendCommand = Button(inputCommandFrame, text = 'Rulare Instructiune', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS))
-    sendCommand.grid(row = 2, column = 1)
+    commandFrame = LabelFrame(inputCommandFrame, padx = 0, pady = 0)
+    commandFrame.grid(row = 2, column = 1)
+
+    sendCommand = Button(commandFrame, text = 'Ruleaza Cod ', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS))
+    sendCommand.grid(row = 0, column = 0)
+    runOneInstr = Button(commandFrame, text = 'Step Instruction ', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS))
+    runOneInstr.grid(row = 0, column = 1)
     
+    
+    # Functions Frame: Memory access and special registers view
+    functionFrame = LabelFrame(root, padx = 0, pady = 0)
+    functionFrame.grid(row = 1, column = 0) 
+
     # Memory window opener
-    openMemoryButton = Button(root, text = 'Memorie', command = lambda: openMemory(mu, ADDRESS, MEM_SIZE))
-    openMemoryButton.grid(row = 3, column = 0)
+    openMemoryButton = Button(functionFrame, text = 'Memorie', command = lambda: openMemory(mu, ADDRESS, MEM_SIZE))
+    openMemoryButton.grid(row = 0, column = 0)
     
+    # Memory hexll window opener
+    openMemoryHexllButton = Button(functionFrame, text = 'Memorie Hexll', command = lambda: openMemoryPureHexll(mu, ADDRESS, MEM_SIZE))
+    openMemoryHexllButton.grid(row = 0, column = 1)
 
     # code to be emulated
     X86_CODE32 = b"\x41\x4a" # INC ecx; DEC edx
@@ -57,13 +70,15 @@ if "__main__" == __name__:
 
         # adding code running hook
         mu.hook_add(UC_HOOK_MEM_WRITE, hook_mem)
+        mu.hook_add(UC_HOOK_CODE, hook_code)
         # write machine code to be emulated to memory
     
         # initialize machine registers
         initializeRegisters(mu, registers_initial_values)
         readRegisters(mu)
         updateStrVar()
-    
+
+        print("x")
     except UcError as e:
         print("ERROR: %s" % e)
     
