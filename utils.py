@@ -53,7 +53,7 @@ def initializeRegisters(mu, listOfValues):
 
     for i in range(number_of_regs):
         mu.reg_write(list_regs_x86[i], listOfValues[i])
-
+    mu.reg_write(UC_X86_REG_EIP, ADDRESS)
 # TODO: (DONE) Set registers names
 def setRegsName():
 
@@ -83,11 +83,12 @@ def runInstruction_old(instr, mu, ADDRESS):
         updateStrVar()
         # printRegString()
 
-# TODO: (DONE)  Run an instruction at a give address
-def runInstruction(instr, mu, ADDRESS, step = False):
+# TODO: Get Instruction code
+def getInstruction(instr, mu, ADDRESS):
 
+    global instr_code
     instr = instr.replace("\n", '')
-    # print(instr)
+    
     # instance of Keystone
     try:
         # Setup a keystone object
@@ -103,23 +104,36 @@ def runInstruction(instr, mu, ADDRESS, step = False):
     except KsError as e:
         print("Error: %s", e)
         instr_code = -1
+    
+   
 
+
+# TODO: (DONE)  Run an instruction at a give address
+def runInstruction(instr, mu, ADDRESS, step = False):
+
+    global instr_code, startStep
+    if not step or (step and startStep == 1):
+        getInstruction(instr, mu, ADDRESS)
+        startStep = 0
+    print(startStep)
     # Check if an error has occured
     if instr_code != -1:
         try:
-            # print(ADDRESS)
-            mu.mem_write(ADDRESS, instr)
-
+            mu.mem_write(ADDRESS, instr_code)
         except:
             print("Memory write FAILED!!")
-        runInstructionOn(mu, ADDRESS, instr)
 
-        read_mem_format(mu, ADDRESS, MEM_SIZE)
-        instr_code = -1
-        readRegisters(mu)
-        updateStrVar()
-        # printRegString()
-
+        if not step:
+            runInstructionOn(mu, ADDRESS, instr_code)
+            # read_mem_format(mu, ADDRESS, MEM_SIZE)
+            instr_code = -1
+            readRegisters(mu)
+            updateStrVar()
+            # printRegString()
+        else:
+            runOneInstruction(mu, ADDRESS, instr_code)
+            readRegisters(mu)
+            updateStrVar()
 
 def hook_mem(uc, access, address, size, value, user_data):
 
@@ -208,10 +222,10 @@ def runInstructionOn(mu, address, instr_code):
     # TODO: Add count = number_of_instr_to_run
     mu.emu_start(address, address + len(instr_code))
 
-def runOneInstruction(mu):
+def runOneInstruction(mu, address, instr_code):
 
     EIP_value = mu.reg_read(UC_X86_REG_EIP) 
-    mu.emu_start(mu, EIP, count = 1)
+    mu.emu_start(EIP_value, address + len(instr_code), count = 1)
 
 
 # Tkinter
@@ -338,3 +352,10 @@ def updateMemoryHexll(mu, address, mem_size):
     mem, _ = read_mem_format(mu, address, mem_size, pure_hexll = True)
     memPureHexllStringVar.set(mem)
 
+
+# TODO: (DONE) Reset step
+def resetStep(mu):
+
+    global startStep
+    startStep = 1
+    mu.reg_write(UC_X86_REG_EIP, ADDRESS)

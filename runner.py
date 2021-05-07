@@ -39,9 +39,10 @@ if "__main__" == __name__:
 
     sendCommand = Button(commandFrame, text = 'Ruleaza Cod ', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS))
     sendCommand.grid(row = 0, column = 0)
-    runOneInstr = Button(commandFrame, text = 'Step Instruction ', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS))
+    runOneInstr = Button(commandFrame, text = 'Step Instruction ', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS, True))
     runOneInstr.grid(row = 0, column = 1)
-    
+    resetStepButton = Button(commandFrame, text = 'Reset Step', command = lambda: resetStep(mu))
+    resetStepButton.grid(row = 0, column = 2)
     
     # Functions Frame: Memory access and special registers view
     functionFrame = LabelFrame(root, padx = 0, pady = 0)

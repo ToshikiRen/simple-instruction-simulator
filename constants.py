@@ -13,6 +13,7 @@ root = Tk()
 size = '700x500'
 
 instr_code = -1
+startStep = 1
 
 ADDRESS = 0x0001000
 MEM_SIZE = 8 * 512
@@ -116,6 +117,3 @@ instruction_set_arch = {
 }
 
 registers_initial_values = [0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]
-
-
-mu = ""
