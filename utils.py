@@ -47,7 +47,7 @@ def readRegisters(mu):
             hex(mu.reg_read(list_regs_x86[i])), list_regs[i])
         regs_dict[list_regs[i]][0] = regs_dict[list_regs[i]][0].upper()
 
-    print( mu.reg_read(UC_X86_REG_EIP))
+    # print( mu.reg_read(UC_X86_REG_EIP))
 # TODO: (DONE)  Initialize registers
 def initializeRegisters(mu, listOfValues):
 
@@ -94,7 +94,7 @@ def getInstruction(instr, mu, ADDRESS):
         # Setup a keystone object
         ks = Ks(KS_ARCH_X86, KS_MODE_32)
         instr_code, count = ks.asm(instr)
-        print(instr_code)
+        # print(instr_code)
         instr = bytes()
 
         for x in instr_code:
@@ -111,11 +111,12 @@ def getInstruction(instr, mu, ADDRESS):
 # TODO: (DONE)  Run an instruction at a give address
 def runInstruction(instr, mu, ADDRESS, step = False):
 
-    global instr_code, startStep
+    global instr_code, startStep, wasStep
+    wasStep = step
     if not step or (step and startStep == 1):
         getInstruction(instr, mu, ADDRESS)
         startStep = 0
-    print(startStep)
+    # print(startStep)
     # Check if an error has occured
     if instr_code != -1:
         try:
@@ -137,16 +138,17 @@ def runInstruction(instr, mu, ADDRESS, step = False):
 
 def hook_mem(uc, access, address, size, value, user_data):
 
-    pass
+    global wasStep
+    if wasStep:
+        mem, _ = read_mem_format(uc, ADDRESS, MEM_SIZE, pure_hexll = True)
+        memPureHexllStringVar.set(mem)
+        mem, _ = read_mem_format(uc, ADDRESS, MEM_SIZE, pure_hexll = False)
+        memStringVar.set(mem)
+    
 
 def hook_code(uc, address, size, user_data):
 
     pass
-
-    readRegisters(uc)
-    updateStrVar()
-    printRegString()
-
     # print("Hook call instr")
    
 
@@ -202,7 +204,7 @@ def read_mem_format(mu, start_address, quantity, per_row = 16, pure_hexll = Fals
             mem_row = " ".join([hexll(x, True)
                             for x in (mem[i * per_row: per_row * (i + 1)])])
             mem_data += mem_row
-            print(mem_row)
+           
 
         mem_data += '\n'
 
@@ -241,7 +243,7 @@ def createScrollableCanvas(main_frame, window = None, Ox = None, Oy = True):
 
     if Oy:
         # Adding the scrollbar
-        scroll = ttk.Scrollbar(main_frame, orient = VERTICAL, command = canvas.yview)
+        scroll = tk.Scrollbar(main_frame, orient = VERTICAL, command = canvas.yview)
         scroll.pack(side = RIGHT, fill = Y)
         
         # Canvas configuration
@@ -250,9 +252,9 @@ def createScrollableCanvas(main_frame, window = None, Ox = None, Oy = True):
         canvas.bind_all('<MouseWheel>', lambda event: canvas.yview_scroll(int(-1 * (event.delta/120)), "units"))
     if Ox:
         if window:
-            scrollX = ttk.Scrollbar(window, orient = HORIZONTAL, command = canvas.xview)
+            scrollX = tk.Scrollbar(window, orient = HORIZONTAL, command = canvas.xview)
         else:
-            scrollX = ttk.Scrollbar(main_frame, orient = HORIZONTAL, command = canvas.xview)
+            scrollX = tk.Scrollbar(main_frame, orient = HORIZONTAL, command = canvas.xview)
         scrollX.pack(side = BOTTOM, fill = X)
         
         # Canvas configuration
@@ -301,7 +303,7 @@ def openMemory(mu, start_address=ADDRESS, quantity=MEM_SIZE, title="Memory", siz
     
 
 
-    print(offset)
+    # print(offset)
 
     # Adds the update memory button
     updateMeme = Button(window, text = 'Update', command = lambda: updateMemory(mu, ADDRESS, MEM_SIZE))
@@ -319,7 +321,7 @@ def updateMemory(mu, address, mem_size):
 
 
 # TODO: (DONE) Displays memory contents hexll
-def openMemoryPureHexll(mu, start_address=ADDRESS, quantity=MEM_SIZE, title="Memory Hexll", size="940x400"):
+def openMemoryPureHexll(mu, start_address=ADDRESS, quantity=MEM_SIZE, title="Memory Hexll", size="460x400"):
 
     global memPureHexllStringVar
     # Set up the window for memory display
@@ -337,7 +339,7 @@ def openMemoryPureHexll(mu, start_address=ADDRESS, quantity=MEM_SIZE, title="Mem
 
     windowFrame = createScrollableCanvas(main_frame, window, True, True)
 
-    print(mem)
+    # print(mem)
 
     # Adds the update memory button
     updateMeme = Button(window, text = 'Update', command = lambda: updateMemoryHexll(mu, ADDRESS, MEM_SIZE))
@@ -359,3 +361,87 @@ def resetStep(mu):
     global startStep
     startStep = 1
     mu.reg_write(UC_X86_REG_EIP, ADDRESS)
+    readRegisters(mu)
+    updateStrVar()
+
+
+# Line numbering classes
+
+class TextLineNumbers(tk.Canvas):
+    def __init__(self, *args, **kwargs):
+        tk.Canvas.__init__(self, *args, **kwargs)
+        self.textwidget = None
+
+    def attach(self, text_widget):
+        self.textwidget = text_widget
+        
+    def redraw(self, *args):
+        '''redraw line numbers'''
+        self.delete("all")
+
+        i = self.textwidget.index("@0,0")
+        while True :
+            dline= self.textwidget.dlineinfo(i)
+            if dline is None: break
+            y = dline[1]
+            linenum = str(i).split(".")[0]
+            self.create_text(2,y,anchor="nw", text=linenum)
+            i = self.textwidget.index("%s+1line" % i)
+
+class CustomText(tk.Text):
+    def __init__(self, *args, **kwargs):
+        tk.Text.__init__(self, *args, **kwargs)
+
+        # create a proxy for the underlying widget
+        self._orig = self._w + "_orig"
+        self.tk.call("rename", self._w, self._orig)
+        self.tk.createcommand(self._w, self._proxy)
+
+    def _proxy(self, *args):
+        # let the actual widget perform the requested action
+        cmd = (self._orig,) + args
+        #result = self.tk.call(cmd)
+        try:
+            result = self.tk.call(cmd)
+        except Exception:
+            return ""
+        # generate an event if something was added or deleted,
+        # or the cursor position changed
+        if (args[0] in ("insert", "replace", "delete") or 
+            args[0:3] == ("mark", "set", "insert") or
+            args[0:2] == ("xview", "moveto") or
+            args[0:2] == ("xview", "scroll") or
+            args[0:2] == ("yview", "moveto") or
+            args[0:2] == ("yview", "scroll")
+        ):
+            self.event_generate("<<Change>>", when="tail")
+
+        # return what the actual widget returned
+        return result      
+
+
+class Example(tk.Frame):
+    def __init__(self, *args, **kwargs):
+        tk.Frame.__init__(self, *args, **kwargs)
+        self.text = CustomText(self, width = 50, height = 22)
+        self.vsb = tk.Scrollbar(self, orient="vertical", command=self.text.yview)
+        self.text.configure(yscrollcommand=self.vsb.set)
+        self.text.tag_configure("bigfont", font=courier18)
+
+        self.linenumbers = TextLineNumbers(self, width=30)
+        self.linenumbers.attach(self.text)
+
+        self.vsb.pack(side="right", fill="y")
+        self.linenumbers.pack(side="left", fill="y")
+        self.text.pack(side="right", fill="both", expand=True)
+
+        self.text.bind("<<Change>>", self._on_change)
+        self.text.bind("<Configure>", self._on_change)
+
+     
+        self.text.insert("end", "Introduceti secventa de cod\n",("bigfont",))
+    
+
+    def _on_change(self, event):
+        self.linenumbers.redraw()
+		

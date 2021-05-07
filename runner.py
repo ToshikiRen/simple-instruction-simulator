@@ -8,7 +8,7 @@ if "__main__" == __name__:
 
     root.title('x86 Registers')
     root.geometry(size)
-    root.resizable(0, 0)
+    # root.resizable(0, 0)
     # Setup registers 
     registerFrame = LabelFrame(root, padx = 0, pady = 0)
     registerFrame.grid(row = 0, column = 0)
@@ -23,23 +23,25 @@ if "__main__" == __name__:
     # Add instructions frame
     inputCommandFrame = LabelFrame(root, padx = 0, pady = 0)
     inputCommandFrame.grid(row = 0, column = 1) 
-    commandLabel = Label(inputCommandFrame, text = 'Introduceti secventa de cod', font = courier18)
-    commandLabel.grid(row = 0, column = 1)
+    Exp = Example(inputCommandFrame)
+    Exp.grid(row = 0, column = 1)
+    #commandLabel = Label(inputCommandFrame, text = 'Introduceti secventa de cod', font = courier18)
+    #commandLabel.grid(row = 0, column = 1)
 
     
     # Add instruction writting textbox
-    inputCommand = Text(inputCommandFrame, height = 17, width = 40)
-    scroll = ttk.Scrollbar(inputCommandFrame, orient = VERTICAL, command = inputCommand.yview)
-    scroll.grid(row = 1, column = 2, sticky='nsew')
-    inputCommand['yscrollcommand'] = scroll.set
-    inputCommand.grid(row = 1, column = 1) 
+    # inputCommand = Text(inputCommandFrame, height = 19, width = 40)
+    # scroll = tk.Scrollbar(inputCommandFrame, orient = VERTICAL, command = inputCommand.yview)
+    # scroll.grid(row = 1, column = 2, sticky='nsew')
+    # inputCommand['yscrollcommand'] = scroll.set
+    # inputCommand.grid(row = 1, column = 1) 
 
     commandFrame = LabelFrame(inputCommandFrame, padx = 0, pady = 0)
     commandFrame.grid(row = 2, column = 1)
 
-    sendCommand = Button(commandFrame, text = 'Ruleaza Cod ', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS))
+    sendCommand = Button(commandFrame, text = 'Ruleaza Cod ', command = lambda: runInstruction(Exp.text.get("1.0", END), mu, ADDRESS))
     sendCommand.grid(row = 0, column = 0)
-    runOneInstr = Button(commandFrame, text = 'Step Instruction ', command = lambda: runInstruction(inputCommand.get("1.0", END), mu, ADDRESS, True))
+    runOneInstr = Button(commandFrame, text = 'Step Instruction ', command = lambda: runInstruction(Exp.text.get("1.0", END), mu, ADDRESS, True))
     runOneInstr.grid(row = 0, column = 1)
     resetStepButton = Button(commandFrame, text = 'Reset Step', command = lambda: resetStep(mu))
     resetStepButton.grid(row = 0, column = 2)
