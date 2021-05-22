@@ -19,6 +19,9 @@ startStep = 1
 ADDRESS = 0x0001000
 MEM_SIZE = 8 * 512
 
+lastLine = 1
+
+
 courier24 = tkFont.Font(family="Courier", size=24, weight="bold")
 courier18 = tkFont.Font(family="Courier", size=18, weight="bold")
 courier10 = tkFont.Font(family="Courier", size=10, weight="bold")

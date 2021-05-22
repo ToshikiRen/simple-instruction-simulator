@@ -67,6 +67,7 @@ def runInstruction_old(instr, mu, ADDRESS):
     instr = instr.replace(" ", "")
     instr = instr.replace("\n", '')
     instr = instr.lower()
+    
     try:
         # print(instr, end='\n')
         instr_code = instruction_set_arch[instr]
@@ -87,14 +88,15 @@ def runInstruction_old(instr, mu, ADDRESS):
 def getInstruction(instr, mu, ADDRESS):
 
     global instr_code
-    instr = instr.replace("\n", '')
+    #instr = instr.replace("\n", '')
     
     # instance of Keystone
     try:
         # Setup a keystone object
         ks = Ks(KS_ARCH_X86, KS_MODE_32)
         instr_code, count = ks.asm(instr)
-        # print(instr_code)
+        print(instr_code)
+        print("Count is : {}".format(count))
         instr = bytes()
 
         for x in instr_code:
@@ -389,13 +391,75 @@ class TextLineNumbers(tk.Canvas):
             i = self.textwidget.index("%s+1line" % i)
 
 class CustomText(tk.Text):
-    def __init__(self, *args, **kwargs):
-        tk.Text.__init__(self, *args, **kwargs)
+    def __init__(self, master, case_insensetive = True, current_line_colour = '', word_end_at = r""" .,{}[]()=+-*/\|<>%""", tags = {},  *args, **kwargs):
+        
+        tk.Text.__init__(self, master = master, *args, **kwargs)
+        
+        self.bind("<KeyRelease>", lambda e: self.highlight())
+        
+        self.case_insensetive = case_insensetive
+        self.highlight_current_line = current_line_colour != ''
+        self.word_end = word_end_at
+        self.tags = tags
+        
+        if self.case_insensetive:
+            for tag in self.tags:
+                self.tags[tag]['words'] = [word.lower() for word in self.tags[tag]['words']]
+        
+        #loops through the syntax dictionary to creat tags for each type
+        for tag in self.tags:
+            self.tag_config(tag, **self.tags[tag]['style'])
+        
+        if self.highlight_current_line:
+            self.tag_configure("current_line", background = current_line_colour)
+            self.tag_add("current_line", "insert linestart", "insert lineend+1c")
+            self.tag_raise("sel")
 
         # create a proxy for the underlying widget
         self._orig = self._w + "_orig"
         self.tk.call("rename", self._w, self._orig)
         self.tk.createcommand(self._w, self._proxy)
+
+
+        #find what is the last word thats being typed.
+    def last_word(self):
+        line, last = self.index(tk.INSERT).split('.')
+        last=int(last)
+        
+        #this limit issues when user is a fast typer
+        last_char = self.get(f'{line}.{int(last)-1}', f'{line}.{last}')
+        while last_char in self.word_end and last > 0:
+            last-=1          
+            last_char = self.get(f'{line}.{int(last)-1}', f'{line}.{last}')
+            
+        first = int(last)
+        while True:
+            first-=1
+            if first<0: break
+            if self.get(f"{line}.{first}", f"{line}.{first+1}") in self.word_end:
+                break
+        return {'word': self.get(f"{line}.{first+1}", f"{line}.{last}"), 'first': f"{line}.{first+1}", 'last': f"{line}.{last}"}
+    
+    #highlight the last word if its a syntax, See: syntax dictionary on the top.
+    #this runs on every key release which is why it fails when the user is too fast.
+    #it also highlights the current line
+    def highlight(self):
+        
+        if self.highlight_current_line:
+            self.tag_remove("current_line", 1.0, "end")
+            self.tag_add("current_line", "insert linestart", "insert lineend+1c")
+        
+        lastword = self.last_word()
+        wrd = lastword['word'].lower() if self.case_insensetive else lastword['word']
+        
+        for tag in self.tags:
+            if wrd in self.tags[tag]['words']:
+                self.tag_add(tag, lastword['first'], lastword['last'])
+            else:
+                self.tag_remove(tag, lastword['first'], lastword['last'])
+        
+        self.tag_raise("sel")
+
 
     def _proxy(self, *args):
         # let the actual widget perform the requested action
@@ -420,12 +484,34 @@ class CustomText(tk.Text):
         return result      
 
 
+
 class Example(tk.Frame):
     def __init__(self, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
-        self.text = CustomText(self, width = 50, height = 22)
+        
+        
+        self.text = CustomText(master = self,
+
+            case_insensetive = True, #True by default.
+            current_line_colour = 'grey10', #'' by default which will not highlight the current line.
+            word_end_at = r""" .,{}[]()=+-*/\|<>%""", #<< by default, this will till the class where is word ending.
+            tags = {#'SomeTagName': {'style': {'someStyle': 'someValue', ... etc}, 'words': ['word1', 'word2' ... etc]}} this tells it to apply this style to these words
+                #"failSynonyms": {'style': {'foreground': 'red', 'font': 'helvetica 8'}, 'words': ['fail', 'bad']},
+   
+                "passSynonyms":{'style': {'foreground': '#00FF80', 'font': 'Courier 12'}, 'words': list_regs},
+                "assemblySyntax":{'style': {'foreground': '#FF0040', 'font': 'Courier 12'}, 'words': self.loadHighlight()}
+                
+               
+                },
+            font='helvetica 12',   #Sandard tkinter text arguments
+            background = 'BLACK',       #Sandard tkinter text arguments
+            foreground = 'white',        #Sandard tkinter text arguments
+            
+            
+            width = 45, height = 22)
         self.vsb = tk.Scrollbar(self, orient="vertical", command=self.text.yview)
         self.text.configure(yscrollcommand=self.vsb.set)
+        self.text.configure(insertbackground = 'blue')
         self.text.tag_configure("bigfont", font=courier18)
 
         self.linenumbers = TextLineNumbers(self, width=30)
@@ -434,13 +520,44 @@ class Example(tk.Frame):
         self.vsb.pack(side="right", fill="y")
         self.linenumbers.pack(side="left", fill="y")
         self.text.pack(side="right", fill="both", expand=True)
-
+        
         self.text.bind("<<Change>>", self._on_change)
         self.text.bind("<Configure>", self._on_change)
+       # self.text.bind("<KeyPress>", self._print_line)
 
-     
+        self.text.tag_config("start", background="blue")
+        #self.text.tag_config("initial", background="blue")
+
+
         self.text.insert("end", "Introduceti secventa de cod\n",("bigfont",))
     
+    def loadHighlight(self, file = 'ISA.txt'):
+        
+        f = open(file, mode = 'r')
+        tags = []
+        lines = f.readlines()
+        for line in lines:
+            line = line.replace("\n", "")
+            tags.append(line)
+        f.close()
+        return tags
+
+    def _print_line(self, event):
+        # For enter event.keycode is equall to 12
+        global lastLine
+        currentLine = int(float(self.text.index(INSERT)))
+        
+        #if lastLine != currentLine:
+        lastLineStr = str(lastLine)
+        currentLineStr = str(currentLine)
+        #for tag in self.text.tag_names():
+        #    if tag == 'start':
+        #        self.text.tag_delete(tag)
+        print("Tag added on line " + currentLineStr)
+        self.text.tag_add("start",  currentLineStr + '.0', currentLineStr + '.50')  
+        #self.text.tag_add("start",  lastLineStr + '.0', lastLineStr + '.50')
+
+        lastLine = currentLine
 
     def _on_change(self, event):
         self.linenumbers.redraw()
