@@ -1,6 +1,10 @@
 # Functions module
 from constants import *
 
+
+
+
+
 # TODO: (DONE)  Set labels
 def setLabel(root, stringVar, font=courier24, anchor="e", justify=LEFT, padx=0,
              width=16):
@@ -88,14 +92,45 @@ def runInstruction_old(instr, mu, ADDRESS):
 def getInstruction(instr, mu, ADDRESS):
 
     global instr_code
-    #instr = instr.replace("\n", '')
-    
+
     # instance of Keystone
     try:
         # Setup a keystone object
         ks = Ks(KS_ARCH_X86, KS_MODE_32)
+        #instr = instr.replace("\n", '')
         instr_code, count = ks.asm(instr)
-        print(instr_code)
+        
+        instr_address = [ADDRESS]
+        idx = 0
+        idx_list = []
+        for line in instr.split("\n"):
+        
+            #print(line )
+            idx += 1
+            try:
+                instr_mini_code, count_mini = ks.asm(line)
+            except:
+                last_instr = line.split(' ')
+                #print(last_instr)
+                last_instr = last_instr[-1]
+                last_instr = last_instr.replace(';', '')
+                print(line + ';' + '\n' + last_instr + ":")
+                instr_mini_code, count_mini = ks.asm(line + ';' + '\n' + last_instr + ":")
+            
+            if instr_mini_code != None:
+                if len(instr_mini_code) > 0: 
+                    instr_address.append(instr_address[-1] + len(instr_mini_code))
+                    idx_list.append(idx)
+
+            
+        for idx in range(len(idx_list)):
+            local_addr = instr_address[idx]
+            local_addr = "%04X"%local_addr
+            EIP_line_number_dict[local_addr] = idx_list[idx]
+
+        print(idx_list)
+        print(instr_address)
+        print(EIP_line_number_dict)
         print("Count is : {}".format(count))
         instr = bytes()
 
@@ -114,6 +149,8 @@ def getInstruction(instr, mu, ADDRESS):
 def runInstruction(instr, mu, ADDRESS, step = False):
 
     global instr_code, startStep, wasStep
+    global Exp
+    print(Exp.text)
     wasStep = step
     if not step or (step and startStep == 1):
         getInstruction(instr, mu, ADDRESS)
@@ -134,6 +171,11 @@ def runInstruction(instr, mu, ADDRESS, step = False):
             updateStrVar()
             # printRegString()
         else:
+            EIP_value = mu.reg_read(UC_X86_REG_EIP)
+            line_nb = EIP_line_number_dict["%04X"%EIP_value]
+            print(line_nb)
+            Exp.text.tag_remove("line_step", 1.0, "end")
+            Exp.text.tag_add("line_step", str(line_nb) + '.0', str(line_nb) + '.100')
             runOneInstruction(mu, ADDRESS, instr_code)
             readRegisters(mu)
             updateStrVar()
@@ -151,8 +193,7 @@ def hook_mem(uc, access, address, size, value, user_data):
 def hook_code(uc, address, size, user_data):
 
     pass
-    # print("Hook call instr")
-   
+    print("Hook call instr: ADDR: {} SIZE: {}".format(address, size))
 
 
 
@@ -363,6 +404,8 @@ def resetStep(mu):
     global startStep
     startStep = 1
     mu.reg_write(UC_X86_REG_EIP, ADDRESS)
+    Exp.text.tag_remove("line_step", 1.0, "end")
+    initializeRegisters(mu, registers_initial_values)
     readRegisters(mu)
     updateStrVar()
 
@@ -383,7 +426,7 @@ class TextLineNumbers(tk.Canvas):
 
         i = self.textwidget.index("@0,0")
         while True :
-            dline= self.textwidget.dlineinfo(i)
+            dline = self.textwidget.dlineinfo(i)
             if dline is None: break
             y = dline[1]
             linenum = str(i).split(".")[0]
@@ -406,6 +449,8 @@ class CustomText(tk.Text):
             for tag in self.tags:
                 self.tags[tag]['words'] = [word.lower() for word in self.tags[tag]['words']]
         
+
+        self.tag_config('line_step', background = 'blue')
         #loops through the syntax dictionary to creat tags for each type
         for tag in self.tags:
             self.tag_config(tag, **self.tags[tag]['style'])
@@ -451,11 +496,12 @@ class CustomText(tk.Text):
         
         lastword = self.last_word()
         wrd = lastword['word'].lower() if self.case_insensetive else lastword['word']
-        
-        for tag in self.tags:
+        wrd = wrd.replace(" ", "") 
+        wrd = wrd.replace("\t", "")
+        for tag in self.tags:      
             if wrd in self.tags[tag]['words']:
                 self.tag_add(tag, lastword['first'], lastword['last'])
-            else:
+            else:                  
                 self.tag_remove(tag, lastword['first'], lastword['last'])
         
         self.tag_raise("sel")
@@ -489,17 +535,18 @@ class Example(tk.Frame):
     def __init__(self, *args, **kwargs):
         tk.Frame.__init__(self, *args, **kwargs)
         
-        
+        global syntax
+        syntax = self.loadHighlight()
         self.text = CustomText(master = self,
-
+            
             case_insensetive = True, #True by default.
             current_line_colour = 'grey10', #'' by default which will not highlight the current line.
             word_end_at = r""" .,{}[]()=+-*/\|<>%""", #<< by default, this will till the class where is word ending.
             tags = {#'SomeTagName': {'style': {'someStyle': 'someValue', ... etc}, 'words': ['word1', 'word2' ... etc]}} this tells it to apply this style to these words
                 #"failSynonyms": {'style': {'foreground': 'red', 'font': 'helvetica 8'}, 'words': ['fail', 'bad']},
    
-                "passSynonyms":{'style': {'foreground': '#00FF80', 'font': 'Courier 12'}, 'words': list_regs},
-                "assemblySyntax":{'style': {'foreground': '#FF0040', 'font': 'Courier 12'}, 'words': self.loadHighlight()}
+                "passSynonyms":{'style': {'foreground': '#00FF80', 'font': 'Courier 12'}, 'words': self.getRegsWithEndings()},
+                "assemblySyntax":{'style': {'foreground': '#FF0040', 'font': 'Courier 12'}, 'words': syntax}
                 
                
                 },
@@ -508,7 +555,7 @@ class Example(tk.Frame):
             foreground = 'white',        #Sandard tkinter text arguments
             
             
-            width = 45, height = 22)
+            width = 45, height = 20)
         self.vsb = tk.Scrollbar(self, orient="vertical", command=self.text.yview)
         self.text.configure(yscrollcommand=self.vsb.set)
         self.text.configure(insertbackground = 'blue')
@@ -542,8 +589,22 @@ class Example(tk.Frame):
         f.close()
         return tags
 
+    def getRegsWithEndings(self):
+        
+        global list_regs
+        
+        regs = list_regs
+        regs += ['AH', 'AL', 'AX', 'BH', 'BX', 'BL', 'CH', 'CX', 'CL', 'DH', 'DX', 'DL']
+        regList = []
+        for reg in regs:
+            regList.append(reg)
+            regList.append(reg + ';')
+        
+
+        return regList
+
     def _print_line(self, event):
-        # For enter event.keycode is equall to 12
+        # For enter event.keycode is equal to 12
         global lastLine
         currentLine = int(float(self.text.index(INSERT)))
         
@@ -562,3 +623,9 @@ class Example(tk.Frame):
     def _on_change(self, event):
         self.linenumbers.redraw()
 		
+
+# Add instructions frame
+inputCommandFrame = LabelFrame(root, padx = 0, pady = 0)
+inputCommandFrame.grid(row = 0, column = 1) 
+Exp = Example(inputCommandFrame)
+Exp.grid(row = 0, column = 1)

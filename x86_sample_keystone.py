@@ -2,7 +2,21 @@
 
 from keystone import *
 
-CODE = b"INC ecx; DEC edx" # separate assembly instructions by ; or \n
+CODE = b"""inc eax;
+inc ebx;
+mov ecx, 20;
+add eax, ecx;
+
+loop:
+	inc eax;
+	loop loop;
+
+inc eax;
+
+inc ecx;
+
+"""
+# separate assembly instructions by ; or \n
 
 try:
     # Initialize engine in X86-32bit mode

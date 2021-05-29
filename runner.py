@@ -20,11 +20,7 @@ if "__main__" == __name__:
     updateStrVar()
     setRegsName()
 
-    # Add instructions frame
-    inputCommandFrame = LabelFrame(root, padx = 0, pady = 0)
-    inputCommandFrame.grid(row = 0, column = 1) 
-    Exp = Example(inputCommandFrame)
-    Exp.grid(row = 0, column = 1)
+
     #commandLabel = Label(inputCommandFrame, text = 'Introduceti secventa de cod', font = courier18)
     #commandLabel.grid(row = 0, column = 1)
 
@@ -73,7 +69,7 @@ if "__main__" == __name__:
 
         # adding code running hook
         mu.hook_add(UC_HOOK_MEM_WRITE, hook_mem)
-        mu.hook_add(UC_HOOK_CODE, hook_code)
+        #mu.hook_add(UC_HOOK_CODE, hook_code)
         # write machine code to be emulated to memory
     
         # initialize machine registers

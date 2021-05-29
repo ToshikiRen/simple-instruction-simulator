@@ -48,6 +48,12 @@ ESP_str = StringVar('')
 EBP_str = StringVar('')
 EIP_str = StringVar('')
 
+
+syntax = []
+EIP_line_number_dict = {}
+
+
+
 # Adressable regs 
 regs_dict = {
     'EAX' :[EAX_data, EAX_str],
