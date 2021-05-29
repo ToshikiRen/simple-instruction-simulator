@@ -141,6 +141,7 @@ def getInstruction(instr, mu, ADDRESS):
     except KsError as e:
         print("Error: %s", e)
         instr_code = -1
+        messagebox.showinfo(title = "EROARE", message = "Eroare la asamblare!")
     
    
 

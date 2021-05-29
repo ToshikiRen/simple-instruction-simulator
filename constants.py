@@ -4,6 +4,7 @@ from unicorn.x86_const import *
 from tkinter import *
 import tkinter as tk
 import tkinter.font as tkFont 
+from tkinter import messagebox
 from keystone import *
 import time
 import threading
