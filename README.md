@@ -29,14 +29,14 @@ Be sure you have Python installed, then run the following commands in order to i
 You may need to install aditional modules needed by the core modules mentioned above.
 # The SIMULATOR
 
-The main pannel:
-![image](images\Simulator_Base_View.png)
+The main pannel <br>
+![image](images/Simulator_Base_View.png)
 
-Step Simulation Example
-![image](images\Simulator_Step_View.png)
+Step Simulation Example <br>
+![image](images/Simulator_Step_View.png)
 
-Hexll Memory Format
-![image](images\Simulator_Hexll_Memory_View.png)
+Hexll Memory Format <br>
+![image](images/Simulator_Hexll_Memory_View.png)
 
 ## Similar projects:
 1. [Carlosrafaelgn’s simulator](https://carlosrafaelgn.com.br/asm86/) - allows the simulation of x86 assembly instructions, easy registers and flags values access. The code runs without letting the user do a step by step simulation.
