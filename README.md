@@ -26,7 +26,12 @@ Be sure you have Python installed, then run the following commands in order to i
    pip install keystone  - for KEYSTONE engine
    pip install tk        - for GUI engine
 ```
-You may need to install aditional modules needed by the core modules mentioned above.
+You may need to install aditional modules needed by the core modules mentioned above. <br>
+If you want to have the same setup I used to test the application on another device you can run the following command in the terminal:
+```
+pip install -r requirements.txt  
+```
+For problems when installing any of the modules required by Keystone, use the following [resource](https://www.lfd.uci.edu/~gohlke/pythonlibs/) for the compiled version of the module. 
 # The SIMULATOR
 
 The main pannel <br>
@@ -37,6 +42,27 @@ Step Simulation Example <br>
 
 Hexll Memory Format <br>
 ![image](images/Simulator_Hexll_Memory_View.png)
+
+# Implementation details
+
+## Millstones
+
+- Setting up the unicorn-keystone-tkinter environment 
+    - Problems:
+        - Combining keystone and unicorn for easy assembling and testing of asm code 
+- Adding memory viewing interface
+    - Problems:
+        - formating the memory in such a way that the user could read the data was a challenge at first
+        - aligning memory cells 
+        - adding hexll format to the memory while keeping the structure mostly the same
+- Step by step running mode
+    - Problems:
+        - Memory:
+            - This was by far the most challenging part of the project, after I added this functionality I had problems with the regular running mode while displaying the memory because it tried to update at each memory acces and it. 
+            - To solve this problem I choose to update the memory only while doing step by step simulation and just add a button for memory updates that the user can click and instantly update the memory.
+        - Step by step Highlight:
+            - It was hard at first to think of a way to map each line of code to a memory address as keystone doesn't provide a memory address instruction mapping
+            - To create this mapping I had to assemble each line of code on its own and create the memory mapping in this way. After I had the memory - instruction map it was easy to map the program lines to the memory and after that highlight the lines 
 
 ## Similar projects:
 1. [Carlosrafaelgn’s simulator](https://carlosrafaelgn.com.br/asm86/) - allows the simulation of x86 assembly instructions, easy registers and flags values access. The code runs without letting the user do a step by step simulation.
