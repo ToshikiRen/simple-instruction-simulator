@@ -22,7 +22,6 @@ def updateStrVar():
 def formatRegisterString(regString, regName):
 
     regString = regString.replace('0x', '')
-    # returnString = regName + ': '
     returnString = ''
     reg_bytes = len(regString)
     nedded_header = '0' * (8 - reg_bytes)
@@ -51,42 +50,18 @@ def readRegisters(mu):
             hex(mu.reg_read(list_regs_x86[i])), list_regs[i])
         regs_dict[list_regs[i]][0] = regs_dict[list_regs[i]][0].upper()
 
-    # print( mu.reg_read(UC_X86_REG_EIP))
 # TODO: (DONE)  Initialize registers
 def initializeRegisters(mu, listOfValues):
 
     for i in range(number_of_regs):
         mu.reg_write(list_regs_x86[i], listOfValues[i])
     mu.reg_write(UC_X86_REG_EIP, ADDRESS)
+
 # TODO: (DONE) Set registers names
 def setRegsName():
 
     for i in range(number_of_regs):
         list_regs_string[i].set(list_regs[i] + ': ')
-
-# TODO: (DONE)  Run instruction
-def runInstruction_old(instr, mu, ADDRESS):
-
-    global instr_code
-    instr = instr.replace(" ", "")
-    instr = instr.replace("\n", '')
-    instr = instr.lower()
-    
-    try:
-        # print(instr, end='\n')
-        instr_code = instruction_set_arch[instr]
-        # print(instr_code, end='\n')
-    except:
-        instr_code = -1
-
-    if instr_code != -1:
-        instr = bytes(instr_code, 'UTF-8')
-        mu.mem_write(ADDRESS, instr)
-        runInstructionOn(mu, ADDRESS, instr)
-        instr_code = -1
-        readRegisters(mu)
-        updateStrVar()
-        # printRegString()
 
 # TODO: Get Instruction code
 def getInstruction(instr, mu, ADDRESS):
@@ -105,16 +80,14 @@ def getInstruction(instr, mu, ADDRESS):
         idx_list = []
         for line in instr.split("\n"):
         
-            #print(line )
+        
             idx += 1
             try:
                 instr_mini_code, count_mini = ks.asm(line)
             except:
                 last_instr = line.split(' ')
-                #print(last_instr)
                 last_instr = last_instr[-1]
                 last_instr = last_instr.replace(';', '')
-                print(line + ';' + '\n' + last_instr + ":")
                 instr_mini_code, count_mini = ks.asm(line + ';' + '\n' + last_instr + ":")
             
             if instr_mini_code != None:
@@ -127,19 +100,14 @@ def getInstruction(instr, mu, ADDRESS):
             local_addr = instr_address[idx]
             local_addr = "%04X"%local_addr
             EIP_line_number_dict[local_addr] = idx_list[idx]
-
-        print(idx_list)
-        print(instr_address)
-        print(EIP_line_number_dict)
-        print("Count is : {}".format(count))
         instr = bytes()
 
         for x in instr_code:
             instr = instr + bytes([x])
         instr_code = instr
     # Error handling
+
     except KsError as e:
-        print("Error: %s", e)
         instr_code = -1
         messagebox.showinfo(title = "EROARE", message = "Eroare la asamblare!")
     
@@ -151,30 +119,26 @@ def runInstruction(instr, mu, ADDRESS, step = False):
 
     global instr_code, startStep, wasStep
     global Exp
-    print(Exp.text)
     wasStep = step
     if not step or (step and startStep == 1):
         getInstruction(instr, mu, ADDRESS)
         startStep = 0
-    # print(startStep)
+   
     # Check if an error has occured
     if instr_code != -1:
         try:
             mu.mem_write(ADDRESS, instr_code)
         except:
-            print("Memory write FAILED!!")
+            messagebox.showinfo(title = "EROARE", message = "Eroare la scrierea instructiunii in memorie!")
 
         if not step:
             runInstructionOn(mu, ADDRESS, instr_code)
-            # read_mem_format(mu, ADDRESS, MEM_SIZE)
             instr_code = -1
             readRegisters(mu)
             updateStrVar()
-            # printRegString()
         else:
             EIP_value = mu.reg_read(UC_X86_REG_EIP)
             line_nb = EIP_line_number_dict["%04X"%EIP_value]
-            print(line_nb)
             Exp.text.tag_remove("line_step", 1.0, "end")
             Exp.text.tag_add("line_step", str(line_nb) + '.0', str(line_nb) + '.100')
             runOneInstruction(mu, ADDRESS, instr_code)
@@ -213,8 +177,6 @@ def add_address_range(start_address, per_row, max_len):
     start = frm%start_address
     
     end = frm%end_addr
-
-    # return start + '->' + end + ': '
     return start + ": "
 
 # TODO: (DONE) Convert data to HEXLL format
@@ -253,10 +215,6 @@ def read_mem_format(mu, start_address, quantity, per_row = 16, pure_hexll = Fals
         mem_data += '\n'
 
     return mem_data, len(add_address_range(start_address, per_row, max_len))
-    # for byte in reversed(mem):
-    #    print(hex(byte), end = "")
-    # print("")
-    # print(mu.reg_read(UC_X86_REG_DS))
 
 
 def setupUI():
@@ -265,6 +223,7 @@ def setupUI():
 
 
 def runInstructionOn(mu, address, instr_code):
+
     # TODO: Add count = number_of_instr_to_run
     mu.emu_start(address, address + len(instr_code))
 
@@ -319,7 +278,7 @@ def openWindow(title, size):
     newWindow = Toplevel(root)
     newWindow.geometry(size)
     newWindow.title(title)
-    # newWindow.resizable(0, 0)
+
     # Create a frame for the canvas
     main_frame = Frame(newWindow)
     
@@ -344,10 +303,6 @@ def openMemory(mu, start_address=ADDRESS, quantity=MEM_SIZE, title="Memory", siz
     stringAddressLabel.pack(side = TOP, anchor = "w")
 
     windowFrame = createScrollableCanvas(main_frame, window, True, True)
-    
-
-
-    # print(offset)
 
     # Adds the update memory button
     updateMeme = Button(window, text = 'Update', command = lambda: updateMemory(mu, ADDRESS, MEM_SIZE))
@@ -383,8 +338,6 @@ def openMemoryPureHexll(mu, start_address=ADDRESS, quantity=MEM_SIZE, title="Mem
 
     windowFrame = createScrollableCanvas(main_frame, window, True, True)
 
-    # print(mem)
-
     # Adds the update memory button
     updateMeme = Button(window, text = 'Update', command = lambda: updateMemoryHexll(mu, ADDRESS, MEM_SIZE))
     updateMeme.pack(side = BOTTOM) 
@@ -406,6 +359,8 @@ def resetStep(mu):
     startStep = 1
     mu.reg_write(UC_X86_REG_EIP, ADDRESS)
     Exp.text.tag_remove("line_step", 1.0, "end")
+    mu.mem_write(ADDRESS, bytes(MEM_SIZE * [0]))
+    
     initializeRegisters(mu, registers_initial_values)
     readRegisters(mu)
     updateStrVar()
@@ -452,7 +407,8 @@ class CustomText(tk.Text):
         
 
         self.tag_config('line_step', background = 'blue')
-        #loops through the syntax dictionary to creat tags for each type
+
+        #loops through the syntax dictionary to create tags for each type
         for tag in self.tags:
             self.tag_config(tag, **self.tags[tag]['style'])
         
@@ -516,6 +472,7 @@ class CustomText(tk.Text):
             result = self.tk.call(cmd)
         except Exception:
             return ""
+
         # generate an event if something was added or deleted,
         # or the cursor position changed
         if (args[0] in ("insert", "replace", "delete") or 
