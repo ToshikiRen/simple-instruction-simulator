@@ -6,6 +6,7 @@
 ![Supported platforms](https://img.shields.io/badge/Platform-Windows-red?style=for-the-badge)
 
 
+
 ## Project Objective:
 Simulation of assembly instructions on an x86 32bit architecture with easy to use user interface.
 ## Functionalities:
