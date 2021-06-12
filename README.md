@@ -1,4 +1,9 @@
-# SMP-2021
+# Simple Instruction Simulator
+
+![GitHub](https://img.shields.io/github/license/ToshikiRen/simple-instruction-simulator?style=for-the-badge)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/ToshikiRen/simple-instruction-simulator?style=for-the-badge)
+![GitHub top language](https://img.shields.io/github/languages/top/ToshikiRen/simple-instruction-simulator?style=for-the-badge)
+![Supported platforms](https://img.shields.io/badge/Platform-Windows-red?style=for-the-badge)
 
 
 ## Project Objective:
